@@ -174,7 +174,7 @@ jobs:
           ALIGNED_APK="$RUNNER_TEMP/pystudio-aligned.apk"
           rm -f "$ALIGNED_APK" "$OUTPUT_APK" "$OUTPUT_APK.sha256"
 
-          "$ZIPALIGN" -P 16 -p -f 4 "$UNSIGNED_APK" "$ALIGNED_APK"
+          "$ZIPALIGN" -P 16 -f 4 "$UNSIGNED_APK" "$ALIGNED_APK"
           "$APKSIGNER" sign \
             --key "$PROJECT_DIR/signing/release.pk8" \
             --cert "$PROJECT_DIR/signing/release.cert.pem" \
