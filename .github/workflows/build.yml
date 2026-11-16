@@ -111,15 +111,21 @@ jobs:
           gradle-version: ${{ env.GRADLE_VERSION }}
           cache-disabled: false
 
-      - name: Set up Android SDK
-        uses: android-actions/setup-android@v3
-
       - name: Install Android SDK packages
         shell: bash
         run: |
           set -euo pipefail
-          yes | sdkmanager --licenses > /dev/null 2>&1 || true
-          sdkmanager --install "platform-tools" "platforms;android-${COMPILE_SDK}" "build-tools;${BUILD_TOOLS_VERSION}"
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-/usr/local/lib/android/sdk}}"
+          SDKMANAGER="$(command -v sdkmanager || true)"
+          if [ -z "$SDKMANAGER" ]; then
+            SDKMANAGER="$(find "$SDK_ROOT/cmdline-tools" -path '*/bin/sdkmanager' 2>/dev/null | sort -V | tail -n 1 || true)"
+          fi
+          test -x "$SDKMANAGER" || { echo "::error::sdkmanager was not found."; exit 1; }
+          yes | "$SDKMANAGER" --sdk_root="$SDK_ROOT" --licenses > /dev/null 2>&1 || true
+          "$SDKMANAGER" --sdk_root="$SDK_ROOT" --install "platform-tools" "platforms;android-${COMPILE_SDK}" "build-tools;${BUILD_TOOLS_VERSION}" \
+            || echo "::warning::Some SDK packages could not be installed; Gradle will try to download what it needs."
+          echo "ANDROID_HOME=$SDK_ROOT" >> "$GITHUB_ENV"
+          echo "ANDROID_SDK_ROOT=$SDK_ROOT" >> "$GITHUB_ENV"
 
       - name: Compute automatic version
         id: version
